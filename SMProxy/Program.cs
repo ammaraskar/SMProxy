@@ -6,6 +6,10 @@ using System.Net;
 using System.Text;
 using System.Net.Sockets;
 using System.Threading;
+using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.Crypto.Engines;
+using Org.BouncyCastle.Crypto.Modes;
+using Org.BouncyCastle.Crypto.Parameters;
 using SharpLauncher;
 
 namespace SMProxy
@@ -18,6 +22,36 @@ namespace SMProxy
         static void Main(string[] args)
         {
             settings = new ProxySettings();
+
+            // TEST CODE
+
+            Proxy test = new Proxy(null, settings);
+            test.RemoteEncryptionEnabled = true;
+            byte[] data = new byte[] { 0x38, 0, 1, 0, 0, 0, 8, 1, 2, 3, 4, 5, 6, 7, 8 };
+            test.RemoteSharedKey = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
+            test.RemoteEncrypter = new BufferedBlockCipher(new CfbBlockCipher(new AesFastEngine(), 8));
+            test.RemoteEncrypter.Init(true,
+                                  new ParametersWithIV(new KeyParameter(test.RemoteSharedKey), test.RemoteSharedKey, 0, 16));
+
+            test.RemoteDecrypter = new BufferedBlockCipher(new CfbBlockCipher(new AesFastEngine(), 8));
+            test.RemoteDecrypter.Init(false,
+                                  new ParametersWithIV(new KeyParameter(test.RemoteSharedKey), test.RemoteSharedKey, 0, 16));
+            data = test.RemoteEncrypter.ProcessBytes(data);
+            Array.Copy(data, 0, test.RemoteBuffer, test.RemoteIndex, data.Length);
+            var packets = PacketReader.TryReadPackets(test, data.Length, PacketContext.ServerToClient);
+
+            data = new byte[] { 0xF0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
+            data = test.RemoteEncrypter.ProcessBytes(data);
+            Array.Copy(data, 0, test.RemoteBuffer, test.RemoteIndex, data.Length);
+            packets = PacketReader.TryReadPackets(test, data.Length, PacketContext.ServerToClient);
+
+            data = new byte[] { 1, 1, 2, 2 };
+            data = test.RemoteEncrypter.ProcessBytes(data);
+            Array.Copy(data, 0, test.RemoteBuffer, test.RemoteIndex, data.Length);
+            packets = PacketReader.TryReadPackets(test, data.Length, PacketContext.ServerToClient);
+
+            // END TEST CODE
+
             bool setRemote = false;
             string username = null, password = null;
             for (int i = 0; i < args.Length; i++)

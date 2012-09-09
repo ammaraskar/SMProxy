@@ -282,12 +282,15 @@ namespace SMProxy
             var results = new List<Packet>();
             byte[] buffer = packetContext == PacketContext.ClientToServer ? proxy.LocalBuffer : proxy.RemoteBuffer;
             // Get a buffer to parse that is the length of the recieved data
-            buffer = buffer.Take(length).ToArray();
+            if (packetContext == PacketContext.ClientToServer)
+                buffer = buffer.Take(proxy.LocalIndex + length).ToArray();
+            else
+                buffer = buffer.Take(proxy.RemoteIndex + length).ToArray();
             // Decrypt the buffer if needed
             if (packetContext == PacketContext.ClientToServer && proxy.LocalEncryptionEnabled)
-                buffer = proxy.LocalDecrypter.ProcessBytes(buffer);
+                Array.Copy(proxy.LocalDecrypter.ProcessBytes(buffer, proxy.LocalIndex, length), 0, buffer, proxy.LocalIndex, length);
             else if (packetContext == PacketContext.ServerToClient && proxy.RemoteEncryptionEnabled)
-                buffer = proxy.RemoteDecrypter.ProcessBytes(buffer);
+                Array.Copy(proxy.RemoteDecrypter.ProcessBytes(buffer, proxy.RemoteIndex, length), 0, buffer, proxy.RemoteIndex, length);
 
             while (buffer.Length > 0)
             {

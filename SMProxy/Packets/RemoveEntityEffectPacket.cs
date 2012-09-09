@@ -8,7 +8,7 @@ namespace SMProxy.Packets
     public class RemoveEntityEffectPacket : Packet
     {
         public int EntityId;
-        public int EffectId;
+        public byte EffectId;
 
         public override byte PacketId
         {
@@ -20,7 +20,7 @@ namespace SMProxy.Packets
             int offset = 1;
             if (!DataUtility.TryReadInt32(buffer, ref offset, out EntityId))
                 return -1;
-            if (!DataUtility.TryReadInt32(buffer, ref offset, out EffectId))
+            if (!DataUtility.TryReadByte(buffer, ref offset, out EffectId))
                 return -1;
             return offset;
         }

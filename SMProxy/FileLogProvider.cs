@@ -26,6 +26,7 @@ namespace SMProxy
                     number++;
                 }
             }
+            stream.AutoFlush = true;
             this.settings = settings;
             stream.WriteLine("Log opened on " + DateTime.Now.ToLongDateString() + " at " + DateTime.Now.ToLongTimeString());
             stream.WriteLine("Settings:");
@@ -35,7 +36,6 @@ namespace SMProxy
         public void Log(string text)
         {
             stream.WriteLine("{" + DateTime.Now.ToLongTimeString() + "} " + text + Environment.NewLine);
-            stream.Flush();
         }
 
         public void Log(Packet packet, Proxy proxy)
@@ -68,7 +68,6 @@ namespace SMProxy
             sb.AppendLine(packet.ToString(proxy));
 
             stream.Write(sb + Environment.NewLine);
-            stream.Flush();
         }
 
         public void Raw(byte[] payload, Proxy proxy, PacketContext packetContext)
@@ -84,7 +83,6 @@ namespace SMProxy
                 sb.AppendLine("RAW {" + DateTime.Now.ToLongTimeString() + "} [SERVER->CLIENT " + proxy.LocalSocket.RemoteEndPoint + "]: ");
             sb.Append(DataUtility.DumpArrayPretty(payload));
             stream.Write(sb + Environment.NewLine);
-            stream.Flush();
         }
     }
 }
