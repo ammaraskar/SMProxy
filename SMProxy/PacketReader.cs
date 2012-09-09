@@ -280,36 +280,46 @@ namespace SMProxy
         public static IEnumerable<Packet> TryReadPackets(Proxy proxy, int length, PacketContext packetContext)
         {
             var results = new List<Packet>();
-            byte[] buffer = packetContext == PacketContext.ClientToServer ? proxy.LocalBuffer : proxy.RemoteBuffer;
+            // buffer is a shrinking buffer of bytes to be interpreted as packets.
+            byte[] buffer;
             // Get a buffer to parse that is the length of the recieved data
+            // Fetch from the network buffer the last incomplete packet (proxy.*Index) plus the length of the data
+            // read in the latest chunk of data.
             if (packetContext == PacketContext.ClientToServer)
-                buffer = buffer.Take(proxy.LocalIndex + length).ToArray();
+                buffer = proxy.LocalBuffer.Take(proxy.LocalIndex + length).ToArray();
             else
-                buffer = buffer.Take(proxy.RemoteIndex + length).ToArray();
+                buffer = proxy.RemoteBuffer.Take(proxy.RemoteIndex + length).ToArray();
             // Decrypt the buffer if needed
+            // If encryption is enabled, the previous packet will be decrypted, and the appended data
+            // will not be. We must only decrypt the latest data, so we send just that data into the
+            // decrypter and copy it back into the buffer.
             if (packetContext == PacketContext.ClientToServer && proxy.LocalEncryptionEnabled)
                 Array.Copy(proxy.LocalDecrypter.ProcessBytes(buffer, proxy.LocalIndex, length), 0, buffer, proxy.LocalIndex, length);
             else if (packetContext == PacketContext.ServerToClient && proxy.RemoteEncryptionEnabled)
                 Array.Copy(proxy.RemoteDecrypter.ProcessBytes(buffer, proxy.RemoteIndex, length), 0, buffer, proxy.RemoteIndex, length);
 
-            while (buffer.Length > 0)
+            length += packetContext == PacketContext.ClientToServer ? proxy.LocalIndex : proxy.RemoteIndex; // Update the length to include the incomplete packet
+            while (buffer.Length > 0) // As long as the buffer is not empty
             {
-                Type packetType = PacketTypes[buffer[0]]; // Get the correct type to parse this packet
+                Type packetType = PacketTypes[buffer[0]]; // Get the correct type to parse this packet based on the first byte of the data
                 if (packetType == null)
                 {
+                    // If there is no packet handler, it's an invalid packet.
                     results.Add(new InvalidPacket(buffer));
                     return results;
                 }
                 var workingPacket = (Packet)Activator.CreateInstance(packetType);
                 workingPacket.PacketContext = packetContext;
-                // Attempt to read the packet
-                int workingLength = workingPacket.TryReadPacket(buffer, length);
+                // Attempt to read the packet, returns the length of the read packet or -1
+                int workingLength = workingPacket.TryReadPacket(buffer, buffer.Length);
                 if (workingLength == -1) // Incomplete packet
                 {
                     // Copy the incomplete packet into the recieve buffer and recieve more data
                     if (packetContext == PacketContext.ClientToServer)
                     {
+                        // Copy the current packet buffer into the start of network buffer (decrypted)
                         Array.Copy(buffer, proxy.LocalBuffer, buffer.Length);
+                        // Set the starting index to the end of that
                         proxy.LocalIndex = buffer.Length;
                     }
                     else
@@ -319,6 +329,8 @@ namespace SMProxy
                     }
                     return results;
                 }
+                // Copy the payload from the buffer into the working packet
+                // so it may be re-sent and logged.
                 workingPacket.Payload = new byte[workingLength];
                 Array.Copy(buffer, workingPacket.Payload, workingLength);
                 // Add this packet to the results
