@@ -279,6 +279,19 @@ namespace SMProxy
         /// </summary>
         public static IEnumerable<Packet> TryReadPackets(Proxy proxy, int length, PacketContext packetContext)
         {
+            // Coming into this code, the proxy has a few possible states:
+            // 1. The recieve index == 0, meaning that there were no incomplete packets from the last time this code ran.
+            // 2. The recieve index != 0, meaning that the last time this ran, there was an incomplete packet that was
+            //    copied in decrypted form to the start of the buffer, and encrypted data (that completes the packet)
+            //    was appended to it. We need to decrypt the encrypted data, which contains the remainder of the incomplete
+            //    packet, and then we can parse it. Decrypting the already decrypted incomplete packet again will cause
+            //    problems.
+            // In either case, the buffer has some amount of data in it that has been recieved from the remote endpoint.
+            // This data may be encrypted, and the amount of data /recieved/ (not including the prior incomplete packet)
+            // is represented by the length variable. The total size of the buffer is lengh + recieve index. The recieve
+            // index represents the starting index to recieve further data to, and is set by this method if it sees an
+            // incomplete packet. In case 1, it is always zero. In case 2, it is the length of the data already seen.
+
             var results = new List<Packet>();
             // buffer is a shrinking buffer of bytes to be interpreted as packets.
             byte[] buffer;
