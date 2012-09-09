@@ -282,20 +282,43 @@ namespace SMProxy
             Index = 0;
             EncryptionEnabled = false;
             Context = context;
+            BufferHistory = new Stack<Tuple<byte[], int, BufferedBlockCipher>>();
         }
 
         public byte[] Buffer { get; set; }
         public int Index { get; set; }
         public bool EncryptionEnabled { get; set; }
-        public BufferedBlockCipher Encrypter { get; set; }
         public BufferedBlockCipher Decrypter { get; set; }
         public PacketContext Context { get; set; }
+
+        public Stack<Tuple<byte[], int, BufferedBlockCipher>> BufferHistory; // Testing <buffer, index>
+
+        public IEnumerable<Packet>  TryReadPackets(int length)
+        {
+            while (true)
+            {
+                try
+                {
+                    BufferHistory.Push(new Tuple<byte[], int, BufferedBlockCipher>(Buffer, Index, Decrypter));
+                    return TryReadPackets_(length);
+                }
+                catch (Exception e)
+                {
+                    System.Diagnostics.Debugger.Break();
+                    // Allow for replay
+                    var item = BufferHistory.Pop();
+                    Buffer = item.Item1;
+                    Index = item.Item2;
+                    Decrypter = item.Item3;
+                }
+            }
+        }
 
         /// <summary>
         /// Attempts to parse all packets in the given client and update
         /// its buffer.
         /// </summary>
-        public IEnumerable<Packet> TryReadPackets(int length)
+        public IEnumerable<Packet> TryReadPackets_(int length)
         {
             var results = new List<Packet>();
             // Decrypt recieved data if needed
@@ -309,6 +332,7 @@ namespace SMProxy
                 {
                     // Unrecognized packet
                     results.Add(new InvalidPacket(Buffer.Take(length).ToArray()));
+                    throw new InvalidOperationException();
                     return results;
                 }
                 var packet = (Packet)Activator.CreateInstance(packetType);

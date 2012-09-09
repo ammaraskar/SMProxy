@@ -21,9 +21,9 @@ namespace SMProxy.Packets
             int offset = 1;
             if (!DataUtility.TryReadInt32(buffer, ref offset, length, out EntityId))
                 return -1;
-            if (!DataUtility.TryReadPackedByte(buffer, ref offset, out Yaw))
+            if (!DataUtility.TryReadPackedByte(buffer, ref offset, length, out Yaw))
                 return -1;
-            if (!DataUtility.TryReadPackedByte(buffer, ref offset, out Pitch))
+            if (!DataUtility.TryReadPackedByte(buffer, ref offset, length, out Pitch))
                 return -1;
             return offset;
         }

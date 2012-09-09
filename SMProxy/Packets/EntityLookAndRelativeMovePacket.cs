@@ -29,9 +29,9 @@ namespace SMProxy.Packets
                 return -1;
             if (!DataUtility.TryReadAbsoluteByte(buffer, ref offset, length, out dZ))
                 return -1;
-            if (!DataUtility.TryReadPackedByte(buffer, ref offset, out Yaw))
+            if (!DataUtility.TryReadPackedByte(buffer, ref offset, length, out Yaw))
                 return -1;
-            if (!DataUtility.TryReadPackedByte(buffer, ref offset, out Pitch))
+            if (!DataUtility.TryReadPackedByte(buffer, ref offset, length, out Pitch))
                 return -1;
             Delta = new Vector3(dX, dY, dZ);
             return offset;

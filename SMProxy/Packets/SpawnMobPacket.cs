@@ -37,11 +37,11 @@ namespace SMProxy.Packets
                 return -1;
             if (!DataUtility.TryReadInt32(buffer, ref offset, length, out z))
                 return -1;
-            if (!DataUtility.TryReadPackedByte(buffer, ref offset, out Yaw))
+            if (!DataUtility.TryReadPackedByte(buffer, ref offset, length, out Yaw))
                 return -1;
-            if (!DataUtility.TryReadPackedByte(buffer, ref offset, out Pitch))
+            if (!DataUtility.TryReadPackedByte(buffer, ref offset, length, out Pitch))
                 return -1;
-            if (!DataUtility.TryReadPackedByte(buffer, ref offset, out HeadYaw))
+            if (!DataUtility.TryReadPackedByte(buffer, ref offset, length, out HeadYaw))
                 return -1;
             if (!DataUtility.TryReadInt16(buffer, ref offset, length, out velX))
                 return -1;

@@ -25,36 +25,36 @@ namespace SMProxy
 
             // TEST CODE
 
-            PacketReader reader = new PacketReader(PacketContext.ClientToServer);
-            byte[] key = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
+            //PacketReader reader = new PacketReader(PacketContext.ClientToServer);
+            //byte[] key = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
 
-            var encrypter = new BufferedBlockCipher(new CfbBlockCipher(new AesFastEngine(), 8));
-            encrypter.Init(true, new ParametersWithIV(new KeyParameter(key), key, 0, 16));
+            //var encrypter = new BufferedBlockCipher(new CfbBlockCipher(new AesFastEngine(), 8));
+            //encrypter.Init(true, new ParametersWithIV(new KeyParameter(key), key, 0, 16));
 
-            reader.Decrypter = new BufferedBlockCipher(new CfbBlockCipher(new AesFastEngine(), 8));
-            reader.Decrypter.Init(false, new ParametersWithIV(new KeyParameter(key), key, 0, 16));
-            reader.EncryptionEnabled = true;
+            //reader.Decrypter = new BufferedBlockCipher(new CfbBlockCipher(new AesFastEngine(), 8));
+            //reader.Decrypter.Init(false, new ParametersWithIV(new KeyParameter(key), key, 0, 16));
+            //reader.EncryptionEnabled = true;
 
-            byte[] data = new byte[] { 0 };
-            data = encrypter.ProcessBytes(data);
+            //byte[] data = new byte[] { 0 };
+            //data = encrypter.ProcessBytes(data);
 
-            Array.Copy(data, 0, reader.Buffer, reader.Index, data.Length);
-            var packets = reader.TryReadPackets(data.Length);
+            //Array.Copy(data, 0, reader.Buffer, reader.Index, data.Length);
+            //var packets = reader.TryReadPackets(data.Length);
 
-            data = new byte[] { 1, 2, 3, 4, 0, 1, 2, 3, 4, 0 };
-            data = encrypter.ProcessBytes(data);
-            Array.Copy(data, 0, reader.Buffer, reader.Index, data.Length);
-            packets = reader.TryReadPackets(data.Length);
+            //data = new byte[] { 1, 2, 3, 4, 0, 1, 2, 3, 4, 0 };
+            //data = encrypter.ProcessBytes(data);
+            //Array.Copy(data, 0, reader.Buffer, reader.Index, data.Length);
+            //packets = reader.TryReadPackets(data.Length);
 
-            data = new byte[] { 1, 2, 3 };
-            data = encrypter.ProcessBytes(data);
-            Array.Copy(data, 0, reader.Buffer, reader.Index, data.Length);
-            packets = reader.TryReadPackets(data.Length);
+            //data = new byte[] { 1, 2, 3 };
+            //data = encrypter.ProcessBytes(data);
+            //Array.Copy(data, 0, reader.Buffer, reader.Index, data.Length);
+            //packets = reader.TryReadPackets(data.Length);
 
-            data = new byte[] { 4, 0 };
-            data = encrypter.ProcessBytes(data);
-            Array.Copy(data, 0, reader.Buffer, reader.Index, data.Length);
-            packets = reader.TryReadPackets(data.Length);
+            //data = new byte[] { 4, 0 };
+            //data = encrypter.ProcessBytes(data);
+            //Array.Copy(data, 0, reader.Buffer, reader.Index, data.Length);
+            //packets = reader.TryReadPackets(data.Length);
 
             // END TEST CODE
 

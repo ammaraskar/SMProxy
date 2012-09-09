@@ -179,10 +179,10 @@ namespace SMProxy
             return new[] { (byte)(((Math.Floor(value) % 360) / 360) * 256) };
         }
 
-        public static bool TryReadPackedByte(byte[] buffer, ref int offset, out float value)
+        public static bool TryReadPackedByte(byte[] buffer, ref int offset, int length, out float value)
         {
             value = 0;
-            if (buffer.Length - offset >= 1)
+            if (length - offset >= 1)
             {
                 value = (buffer[0] / 256f) * 360f;
                 offset++;
@@ -371,7 +371,7 @@ namespace SMProxy
             value = null;
             short stringLength;
 
-            if (buffer.Length - offset >= 2)
+            if (length - offset >= 2)
                 stringLength = ReadInt16(buffer, offset);
             else
                 return false;
@@ -380,7 +380,7 @@ namespace SMProxy
                 throw new ArgumentOutOfRangeException("value", "String length is less than zero");
 
             offset += 2;
-            if (buffer.Length - offset >= stringLength)
+            if (length - offset >= stringLength)
             {
                 value = Encoding.BigEndianUnicode.GetString(buffer, offset, stringLength * 2);
                 offset += stringLength * 2;
@@ -396,7 +396,7 @@ namespace SMProxy
         public static bool TryReadArray(byte[] buffer, ref int offset, int bufferLength, out byte[] value, int arrayLength)
         {
             value = null;
-            if (buffer.Length - offset < arrayLength)
+            if (bufferLength - offset < arrayLength)
                 return false;
             value = new byte[arrayLength];
             Array.Copy(buffer, offset, value, 0, arrayLength);

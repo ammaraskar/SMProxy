@@ -39,11 +39,11 @@ namespace SMProxy.Packets
                 return -1;
             if (!DataUtility.TryReadAbsoluteInteger(buffer, ref offset, length, out z))
                 return -1;
-            if (!DataUtility.TryReadPackedByte(buffer, ref offset, out Rotation))
+            if (!DataUtility.TryReadPackedByte(buffer, ref offset, length, out Rotation))
                 return -1;
-            if (!DataUtility.TryReadPackedByte(buffer, ref offset, out Pitch))
+            if (!DataUtility.TryReadPackedByte(buffer, ref offset, length, out Pitch))
                 return -1;
-            if (!DataUtility.TryReadPackedByte(buffer, ref offset, out Yaw))
+            if (!DataUtility.TryReadPackedByte(buffer, ref offset, length, out Yaw))
                 return -1;
             Item = new Slot(id, count, metadata);
             Position = new Vector3(x, y, z);
