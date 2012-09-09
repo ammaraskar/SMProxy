@@ -23,19 +23,19 @@ namespace SMProxy.Packets
         {
             int offset = 1;
             int dataLength;
-            if (!DataUtility.TryReadInt32(buffer, ref offset, out X))
+            if (!DataUtility.TryReadInt32(buffer, ref offset, length, out X))
                 return -1;
-            if (!DataUtility.TryReadInt32(buffer, ref offset, out Z))
+            if (!DataUtility.TryReadInt32(buffer, ref offset, length, out Z))
                 return -1;
-            if (!DataUtility.TryReadBoolean(buffer, ref offset, out GroundUpContinuous))
+            if (!DataUtility.TryReadBoolean(buffer, ref offset, length, out GroundUpContinuous))
                 return -1;
-            if (!DataUtility.TryReadUInt16(buffer, ref offset, out PrimaryBitMap))
+            if (!DataUtility.TryReadUInt16(buffer, ref offset, length, out PrimaryBitMap))
                 return -1;
-            if (!DataUtility.TryReadUInt16(buffer, ref offset, out AddBitMap))
+            if (!DataUtility.TryReadUInt16(buffer, ref offset, length, out AddBitMap))
                 return -1;
-            if (!DataUtility.TryReadInt32(buffer, ref offset, out dataLength))
+            if (!DataUtility.TryReadInt32(buffer, ref offset, length, out dataLength))
                 return -1;
-            if (!DataUtility.TryReadArray(buffer, (short)dataLength, ref offset, out CompressedData))
+            if (!DataUtility.TryReadArray(buffer, ref offset, length, out CompressedData, (short)dataLength))
                 return -1;
             return offset;
         }

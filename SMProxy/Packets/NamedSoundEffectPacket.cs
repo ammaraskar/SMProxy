@@ -21,17 +21,17 @@ namespace SMProxy.Packets
         {
             int offset = 1;
             int x, y, z;
-            if (!DataUtility.TryReadString(buffer, ref offset, out SoundName))
+            if (!DataUtility.TryReadString(buffer, ref offset, length, out SoundName))
                 return -1;
-            if (!DataUtility.TryReadInt32(buffer, ref offset, out x))
+            if (!DataUtility.TryReadInt32(buffer, ref offset, length, out x))
                 return -1;
-            if (!DataUtility.TryReadInt32(buffer, ref offset, out y))
+            if (!DataUtility.TryReadInt32(buffer, ref offset, length, out y))
                 return -1;
-            if (!DataUtility.TryReadInt32(buffer, ref offset, out z))
+            if (!DataUtility.TryReadInt32(buffer, ref offset, length, out z))
                 return -1;
-            if (!DataUtility.TryReadFloat(buffer, ref offset, out Volume))
+            if (!DataUtility.TryReadFloat(buffer, ref offset, length, out Volume))
                 return -1;
-            if (!DataUtility.TryReadByte(buffer, ref offset, out Pitch))
+            if (!DataUtility.TryReadByte(buffer, ref offset, length, out Pitch))
                 return -1;
             return offset;
         }

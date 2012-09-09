@@ -137,26 +137,26 @@ namespace SMProxy
             return s;
         }
 
-        public static bool TryReadSlot(byte[] buffer, ref int offset, out Slot slot)
+        public static bool TryReadSlot(byte[] buffer, ref int offset, int length, out Slot slot)
         {
             slot = new Slot();
-            if (!DataUtility.TryReadUInt16(buffer, ref offset, out slot.Id))
+            if (!DataUtility.TryReadUInt16(buffer, ref offset, length, out slot.Id))
                 return false;
             if (slot.Id == 0xFFFF)
                 return true;
-            if (!DataUtility.TryReadByte(buffer, ref offset, out slot.Count))
+            if (!DataUtility.TryReadByte(buffer, ref offset, length, out slot.Count))
                 return false;
-            if (!DataUtility.TryReadUInt16(buffer, ref offset, out slot.Metadata))
+            if (!DataUtility.TryReadUInt16(buffer, ref offset, length, out slot.Metadata))
                 return false;
-            short length = 0;
-            if (!DataUtility.TryReadInt16(buffer, ref offset, out length))
+            short nbtLength = 0;
+            if (!DataUtility.TryReadInt16(buffer, ref offset, length, out nbtLength))
                 return false;
-            if (length == -1)
+            if (nbtLength == -1)
                 return true;
-            var compressed = new byte[length];
-            if (!DataUtility.TryReadArray(buffer, length, ref offset, out compressed))
+            var compressed = new byte[nbtLength];
+            if (!DataUtility.TryReadArray(buffer, ref offset, length, out compressed, nbtLength))
                 return false;
-            if (length != -1)
+            if (nbtLength != -1)
             {
                 var output = new MemoryStream();
                 var gzs = new GZipStream(new MemoryStream(compressed), CompressionMode.Decompress, false);

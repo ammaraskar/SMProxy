@@ -32,7 +32,7 @@ namespace Craft.Net.Data.Metadata
             return data.ToArray();
         }
 
-        public static bool TryReadMetadata(byte[] buffer, ref int offset, out MetadataDictionary value)
+        public static bool TryReadMetadata(byte[] buffer, ref int offset, int length, out MetadataDictionary value)
         {
             value = new MetadataDictionary();
             while (buffer[offset] != 127)
@@ -42,7 +42,7 @@ namespace Craft.Net.Data.Metadata
                 byte index = (byte)(key & 0x1F);
                 var entryType = entryTypes[type];
                 value[index] = (MetadataEntry)Activator.CreateInstance(entryType, index);
-                if (!value[index].TryReadEntry(buffer, ref offset))
+                if (!value[index].TryReadEntry(buffer, ref offset, length))
                     return false;
                 if (offset >= buffer.Length)
                     return false;

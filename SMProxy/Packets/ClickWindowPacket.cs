@@ -22,17 +22,17 @@ namespace SMProxy.Packets
         public override int TryReadPacket(byte[] buffer, int length)
         {
             int offset = 1;
-            if (!DataUtility.TryReadByte(buffer, ref offset, out WindowId))
+            if (!DataUtility.TryReadByte(buffer, ref offset, length, out WindowId))
                 return -1;
-            if (!DataUtility.TryReadInt16(buffer, ref offset, out SlotIndex))
+            if (!DataUtility.TryReadInt16(buffer, ref offset, length, out SlotIndex))
                 return -1;
-            if (!DataUtility.TryReadBoolean(buffer, ref offset, out RightClick))
+            if (!DataUtility.TryReadBoolean(buffer, ref offset, length, out RightClick))
                 return -1;
-            if (!DataUtility.TryReadInt16(buffer, ref offset, out ActionNumber))
+            if (!DataUtility.TryReadInt16(buffer, ref offset, length, out ActionNumber))
                 return -1;
-            if (!DataUtility.TryReadBoolean(buffer, ref offset, out Shift))
+            if (!DataUtility.TryReadBoolean(buffer, ref offset, length, out Shift))
                 return -1;
-            if (!Slot.TryReadSlot(buffer, ref offset, out ClickedItem))
+            if (!Slot.TryReadSlot(buffer, ref offset, length, out ClickedItem))
                 return -1;
             return offset;
         }

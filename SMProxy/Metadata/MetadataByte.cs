@@ -21,7 +21,7 @@ namespace Craft.Net.Data.Metadata
             Value = value;
         }
 
-        public override bool TryReadEntry(byte[] buffer, ref int offset)
+        public override bool TryReadEntry(byte[] buffer, ref int offset, int length)
         {
             if (buffer.Length - offset < 2)
                 return false;

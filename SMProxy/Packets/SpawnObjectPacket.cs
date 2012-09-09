@@ -23,26 +23,26 @@ namespace SMProxy.Packets
             int offset = 1;
             int x, y, z;
             short speedX, speedY, speedZ;
-            if (!DataUtility.TryReadInt32(buffer, ref offset, out EntityId))
+            if (!DataUtility.TryReadInt32(buffer, ref offset, length, out EntityId))
                 return -1;
-            if (!DataUtility.TryReadByte(buffer, ref offset, out Type))
+            if (!DataUtility.TryReadByte(buffer, ref offset, length, out Type))
                 return -1;
-            if (!DataUtility.TryReadInt32(buffer, ref offset, out x))
+            if (!DataUtility.TryReadInt32(buffer, ref offset, length, out x))
                 return -1;
-            if (!DataUtility.TryReadInt32(buffer, ref offset, out y))
+            if (!DataUtility.TryReadInt32(buffer, ref offset, length, out y))
                 return -1;
-            if (!DataUtility.TryReadInt32(buffer, ref offset, out z))
+            if (!DataUtility.TryReadInt32(buffer, ref offset, length, out z))
                 return -1;
-            if (!DataUtility.TryReadInt32(buffer, ref offset, out ObjectData))
+            if (!DataUtility.TryReadInt32(buffer, ref offset, length, out ObjectData))
                 return -1;
             Position = new Vector3(x, y, z);
             if (ObjectData <= 0)
                 return offset;
-            if (!DataUtility.TryReadInt16(buffer, ref offset, out speedX))
+            if (!DataUtility.TryReadInt16(buffer, ref offset, length, out speedX))
                 return -1;
-            if (!DataUtility.TryReadInt16(buffer, ref offset, out speedY))
+            if (!DataUtility.TryReadInt16(buffer, ref offset, length, out speedY))
                 return -1;
-            if (!DataUtility.TryReadInt16(buffer, ref offset, out speedZ))
+            if (!DataUtility.TryReadInt16(buffer, ref offset, length, out speedZ))
                 return -1;
             Speed = new Vector3(speedX, speedY, speedZ);
             return offset;

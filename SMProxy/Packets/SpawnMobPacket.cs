@@ -27,15 +27,15 @@ namespace SMProxy.Packets
             int offset = 1;
             int x, y, z;
             short velX, velY, velZ;
-            if (!DataUtility.TryReadInt32(buffer, ref offset, out EntityId))
+            if (!DataUtility.TryReadInt32(buffer, ref offset, length, out EntityId))
                 return -1;
-            if (!DataUtility.TryReadByte(buffer, ref offset, out Type))
+            if (!DataUtility.TryReadByte(buffer, ref offset, length, out Type))
                 return -1;
-            if (!DataUtility.TryReadInt32(buffer, ref offset, out x))
+            if (!DataUtility.TryReadInt32(buffer, ref offset, length, out x))
                 return -1;
-            if (!DataUtility.TryReadInt32(buffer, ref offset, out y))
+            if (!DataUtility.TryReadInt32(buffer, ref offset, length, out y))
                 return -1;
-            if (!DataUtility.TryReadInt32(buffer, ref offset, out z))
+            if (!DataUtility.TryReadInt32(buffer, ref offset, length, out z))
                 return -1;
             if (!DataUtility.TryReadPackedByte(buffer, ref offset, out Yaw))
                 return -1;
@@ -43,13 +43,13 @@ namespace SMProxy.Packets
                 return -1;
             if (!DataUtility.TryReadPackedByte(buffer, ref offset, out HeadYaw))
                 return -1;
-            if (!DataUtility.TryReadInt16(buffer, ref offset, out velX))
+            if (!DataUtility.TryReadInt16(buffer, ref offset, length, out velX))
                 return -1;
-            if (!DataUtility.TryReadInt16(buffer, ref offset, out velY))
+            if (!DataUtility.TryReadInt16(buffer, ref offset, length, out velY))
                 return -1;
-            if (!DataUtility.TryReadInt16(buffer, ref offset, out velZ))
+            if (!DataUtility.TryReadInt16(buffer, ref offset, length, out velZ))
                 return -1;
-            if (!MetadataDictionary.TryReadMetadata(buffer, ref offset, out Metadata))
+            if (!MetadataDictionary.TryReadMetadata(buffer, ref offset, length, out Metadata))
                 return -1;
             Position = new Vector3(x, y, z);
             Velocity = new Vector3(velX, velY, velZ);

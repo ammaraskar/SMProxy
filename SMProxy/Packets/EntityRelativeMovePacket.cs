@@ -19,13 +19,13 @@ namespace SMProxy.Packets
         {
             int offset = 1;
             double dX, dY, dZ;
-            if (!DataUtility.TryReadInt32(buffer, ref offset, out EntityId))
+            if (!DataUtility.TryReadInt32(buffer, ref offset, length, out EntityId))
                 return -1;
-            if (!DataUtility.TryReadAbsoluteByte(buffer, ref offset, out dX))
+            if (!DataUtility.TryReadAbsoluteByte(buffer, ref offset, length, out dX))
                 return -1;
-            if (!DataUtility.TryReadAbsoluteByte(buffer, ref offset, out dY))
+            if (!DataUtility.TryReadAbsoluteByte(buffer, ref offset, length, out dY))
                 return -1;
-            if (!DataUtility.TryReadAbsoluteByte(buffer, ref offset, out dZ))
+            if (!DataUtility.TryReadAbsoluteByte(buffer, ref offset, length, out dZ))
                 return -1;
             Delta = new Vector3(dX, dY, dZ);
             return offset;

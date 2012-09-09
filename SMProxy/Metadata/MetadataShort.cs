@@ -22,12 +22,12 @@ namespace Craft.Net.Data.Metadata
             Value = value;
         }
 
-        public override bool TryReadEntry(byte[] buffer, ref int offset)
+        public override bool TryReadEntry(byte[] buffer, ref int offset, int length)
         {
             if (buffer.Length - offset < 3)
                 return false;
             offset++;
-            if (!DataUtility.TryReadInt16(buffer, ref offset, out Value))
+            if (!DataUtility.TryReadInt16(buffer, ref offset, length, out Value))
                 return false;
             return true;
         }

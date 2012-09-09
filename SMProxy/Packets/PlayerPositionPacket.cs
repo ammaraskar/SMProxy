@@ -20,15 +20,15 @@ namespace SMProxy.Packets
         {
             int offset = 1;
             double x, y, z;
-            if (!DataUtility.TryReadDouble(buffer, ref offset, out x))
+            if (!DataUtility.TryReadDouble(buffer, ref offset, length, out x))
                 return -1;
-            if (!DataUtility.TryReadDouble(buffer, ref offset, out y))
+            if (!DataUtility.TryReadDouble(buffer, ref offset, length, out y))
                 return -1;
-            if (!DataUtility.TryReadDouble(buffer, ref offset, out Stance))
+            if (!DataUtility.TryReadDouble(buffer, ref offset, length, out Stance))
                 return -1;
-            if (!DataUtility.TryReadDouble(buffer, ref offset, out z))
+            if (!DataUtility.TryReadDouble(buffer, ref offset, length, out z))
                 return -1;
-            if (!DataUtility.TryReadBoolean(buffer, ref offset, out OnGround))
+            if (!DataUtility.TryReadBoolean(buffer, ref offset, length, out OnGround))
                 return -1;
             Position = new Vector3(x, y, z);
             return offset;

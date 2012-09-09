@@ -22,17 +22,17 @@ namespace Craft.Net.Data.Metadata
             Value = value;
         }
 
-        public override bool TryReadEntry(byte[] buffer, ref int offset)
+        public override bool TryReadEntry(byte[] buffer, ref int offset, int length)
         {
             if (buffer.Length - offset < 13)
                 return false;
             offset++;
             int x, y, z;
-            if (!DataUtility.TryReadInt32(buffer, ref offset, out x))
+            if (!DataUtility.TryReadInt32(buffer, ref offset, length, out x))
                 return false;
-            if (!DataUtility.TryReadInt32(buffer, ref offset, out y))
+            if (!DataUtility.TryReadInt32(buffer, ref offset, length, out y))
                 return false;
-            if (!DataUtility.TryReadInt32(buffer, ref offset, out z))
+            if (!DataUtility.TryReadInt32(buffer, ref offset, length, out z))
                 return false;
             Value = new Vector3(x, y, z);
             return true;

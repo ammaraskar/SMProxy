@@ -21,15 +21,15 @@ namespace SMProxy.Packets
             int offset = 1;
             int x, z;
             byte y;
-            if (!DataUtility.TryReadInt32(buffer, ref offset, out x))
+            if (!DataUtility.TryReadInt32(buffer, ref offset, length, out x))
                 return -1;
-            if (!DataUtility.TryReadByte(buffer, ref offset, out y))
+            if (!DataUtility.TryReadByte(buffer, ref offset, length, out y))
                 return -1;
-            if (!DataUtility.TryReadInt32(buffer, ref offset, out z))
+            if (!DataUtility.TryReadInt32(buffer, ref offset, length, out z))
                 return -1;
-            if (!DataUtility.TryReadInt16(buffer, ref offset, out Id))
+            if (!DataUtility.TryReadInt16(buffer, ref offset, length, out Id))
                 return -1;
-            if (!DataUtility.TryReadByte(buffer, ref offset, out Metadata))
+            if (!DataUtility.TryReadByte(buffer, ref offset, length, out Metadata))
                 return -1;
             Position = new Vector3(x, y, z);
             return offset;

@@ -22,18 +22,18 @@ namespace Craft.Net.Data.Metadata
             Value = value;
         }
 
-        public override bool TryReadEntry(byte[] buffer, ref int offset)
+        public override bool TryReadEntry(byte[] buffer, ref int offset, int length)
         {
             if (buffer.Length - offset < 6)
                 return false;
             offset++;
             ushort id, metadata;
             byte count;
-            if (!DataUtility.TryReadUInt16(buffer, ref offset, out id))
+            if (!DataUtility.TryReadUInt16(buffer, ref offset, length, out id))
                 return false;
-            if (!DataUtility.TryReadByte(buffer, ref offset, out count))
+            if (!DataUtility.TryReadByte(buffer, ref offset, length, out count))
                 return false;
-            if (!DataUtility.TryReadUInt16(buffer, ref offset, out metadata))
+            if (!DataUtility.TryReadUInt16(buffer, ref offset, length, out metadata))
                 return false;
             Value = new Slot(id, count, metadata);
             return true;

@@ -17,7 +17,7 @@ namespace SMProxy.Packets
         public override int TryReadPacket(byte[] buffer, int length)
         {
             int offset = 1;
-            if (!DataUtility.TryReadInt16(buffer, ref offset, out SlotIndex))
+            if (!DataUtility.TryReadInt16(buffer, ref offset, length, out SlotIndex))
                 return -1;
             return offset;
         }

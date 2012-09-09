@@ -25,17 +25,17 @@ namespace SMProxy.Packets
             short y;
             short dataLength;
             byte[] data;
-            if (!DataUtility.TryReadInt32(buffer, ref offset, out x))
+            if (!DataUtility.TryReadInt32(buffer, ref offset, length, out x))
                 return -1;
-            if (!DataUtility.TryReadInt16(buffer, ref offset, out y))
+            if (!DataUtility.TryReadInt16(buffer, ref offset, length, out y))
                 return -1;
-            if (!DataUtility.TryReadInt32(buffer, ref offset, out z))
+            if (!DataUtility.TryReadInt32(buffer, ref offset, length, out z))
                 return -1;
-            if (!DataUtility.TryReadByte(buffer, ref offset, out Action))
+            if (!DataUtility.TryReadByte(buffer, ref offset, length, out Action))
                 return -1;
-            if (!DataUtility.TryReadInt16(buffer, ref offset, out dataLength))
+            if (!DataUtility.TryReadInt16(buffer, ref offset, length, out dataLength))
                 return -1;
-            if (!DataUtility.TryReadArray(buffer, dataLength, ref offset, out data))
+            if (!DataUtility.TryReadArray(buffer, ref offset, length, out data, dataLength))
                 return -1;
             Data = new NbtFile();
             Data.LoadFile(new MemoryStream(data), false);

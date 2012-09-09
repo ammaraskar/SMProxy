@@ -210,10 +210,10 @@ namespace SMProxy
         /// <summary>
         /// Attempts to read a Minecraft-style boolean value from the specified buffer.
         /// </summary>
-        public static bool TryReadBoolean(byte[] buffer, ref int offset, out bool value)
+        public static bool TryReadBoolean(byte[] buffer, ref int offset, int length, out bool value)
         {
             value = false;
-            if (buffer.Length - offset >= 1)
+            if (length - offset >= 1)
             {
                 value = buffer[offset++] == 1;
                 return true;
@@ -224,10 +224,10 @@ namespace SMProxy
         /// <summary>
         /// Attempts to read a Minecraft-style 8-bit unsigned integer from the given buffer.
         /// </summary>
-        public static bool TryReadByte(byte[] buffer, ref int offset, out byte value)
+        public static bool TryReadByte(byte[] buffer, ref int offset, int length, out byte value)
         {
             value = 0;
-            if (buffer.Length - offset >= 1)
+            if (length - offset >= 1)
             {
                 value = buffer[offset++];
                 return true;
@@ -238,10 +238,10 @@ namespace SMProxy
         /// <summary>
         /// Attempts to read a Minecraft-style 16-bit integer from the given buffer.
         /// </summary>
-        public static bool TryReadUInt16(byte[] buffer, ref int offset, out ushort value)
+        public static bool TryReadUInt16(byte[] buffer, ref int offset, int length, out ushort value)
         {
             value = 0xFFFF;
-            if (buffer.Length - offset >= 2)
+            if (length - offset >= 2)
             {
                 value = unchecked((ushort)(buffer[0 + offset] << 8 | buffer[1 + offset]));
                 offset += 2;
@@ -253,10 +253,10 @@ namespace SMProxy
         /// <summary>
         /// Attempts to read a Minecraft-style 16-bit integer from the given buffer.
         /// </summary>
-        public static bool TryReadInt16(byte[] buffer, ref int offset, out short value)
+        public static bool TryReadInt16(byte[] buffer, ref int offset, int length, out short value)
         {
             value = -1;
-            if (buffer.Length - offset >= 2)
+            if (length - offset >= 2)
             {
                 value = unchecked((short)(buffer[0 + offset] << 8 | buffer[1 + offset]));
                 offset += 2;
@@ -268,10 +268,10 @@ namespace SMProxy
         /// <summary>
         /// Attempts to read a Minecraft-style 32-bit integer from the given buffer.
         /// </summary>
-        public static bool TryReadInt32(byte[] buffer, ref int offset, out int value)
+        public static bool TryReadInt32(byte[] buffer, ref int offset, int length, out int value)
         {
             value = -1;
-            if (buffer.Length - offset >= 4)
+            if (length - offset >= 4)
             {
                 value = unchecked(buffer[0 + offset] << 24 |
                                   buffer[1 + offset] << 16 |
@@ -283,21 +283,21 @@ namespace SMProxy
             return false;
         }
 
-        public static bool TryReadAbsoluteInteger(byte[] buffer, ref int offset, out double value)
+        public static bool TryReadAbsoluteInteger(byte[] buffer, ref int offset, int length, out double value)
         {
             int unconverted;
             value = 0;
-            if (!TryReadInt32(buffer, ref offset, out unconverted))
+            if (!TryReadInt32(buffer, ref offset, length, out unconverted))
                 return false;
             value = unconverted / 32.0;
             return true;
         }
 
-        public static bool TryReadAbsoluteByte(byte[] buffer, ref int offset, out double value)
+        public static bool TryReadAbsoluteByte(byte[] buffer, ref int offset, int length, out double value)
         {
             byte unconverted;
             value = 0;
-            if (!TryReadByte(buffer, ref offset, out unconverted))
+            if (!TryReadByte(buffer, ref offset, length, out unconverted))
                 return false;
             value = unconverted / 32.0;
             return true;
@@ -306,9 +306,9 @@ namespace SMProxy
         /// <summary>
         /// Attempts to read a Minecraft-style 64-bit integer from the given buffer.
         /// </summary>
-        public static bool TryReadInt64(byte[] buffer, ref int offset, out long value)
+        public static bool TryReadInt64(byte[] buffer, ref int offset, int length, out long value)
         {
-            if (buffer.Length - offset >= 8)
+            if (length - offset >= 8)
             {
                 unchecked
                 {
@@ -332,12 +332,12 @@ namespace SMProxy
         /// <summary>
         /// Attempts to read a Minecraft-style 32-bit floating-point value from the given buffer.
         /// </summary>
-        public static unsafe bool TryReadFloat(byte[] buffer, ref int offset, out float value)
+        public static unsafe bool TryReadFloat(byte[] buffer, ref int offset, int length, out float value)
         {
             value = -1;
             int i;
 
-            if (TryReadInt32(buffer, ref offset, out i))
+            if (TryReadInt32(buffer, ref offset, length, out i))
             {
                 value = *(float*)&i;
                 return true;
@@ -349,12 +349,12 @@ namespace SMProxy
         /// <summary>
         /// Attempts to read a Minecraft-style 64-bit floating-point value from the given buffer.
         /// </summary>
-        public static unsafe bool TryReadDouble(byte[] buffer, ref int offset, out double value)
+        public static unsafe bool TryReadDouble(byte[] buffer, ref int offset, int length, out double value)
         {
             value = -1;
             long l;
 
-            if (TryReadInt64(buffer, ref offset, out l))
+            if (TryReadInt64(buffer, ref offset, length, out l))
             {
                 value = *(double*)&l;
                 return true;
@@ -366,24 +366,24 @@ namespace SMProxy
         /// <summary>
         /// Attempts to read a Minecraft-style length-prefixed UCS-2 string from the given buffer.
         /// </summary>
-        public static bool TryReadString(byte[] buffer, ref int offset, out string value)
+        public static bool TryReadString(byte[] buffer, ref int offset, int length, out string value)
         {
             value = null;
-            short length;
+            short stringLength;
 
             if (buffer.Length - offset >= 2)
-                length = ReadInt16(buffer, offset);
+                stringLength = ReadInt16(buffer, offset);
             else
                 return false;
 
-            if (length < 0)
+            if (stringLength < 0)
                 throw new ArgumentOutOfRangeException("value", "String length is less than zero");
 
             offset += 2;
-            if (buffer.Length - offset >= length)
+            if (buffer.Length - offset >= stringLength)
             {
-                value = Encoding.BigEndianUnicode.GetString(buffer, offset, length * 2);
-                offset += length * 2;
+                value = Encoding.BigEndianUnicode.GetString(buffer, offset, stringLength * 2);
+                offset += stringLength * 2;
                 return true;
             }
 
@@ -393,14 +393,14 @@ namespace SMProxy
         /// <summary>
         /// Attempts to read an arbituary number of bytes from the given buffer.
         /// </summary>
-        public static bool TryReadArray(byte[] buffer, int length, ref int offset, out byte[] value)
+        public static bool TryReadArray(byte[] buffer, ref int offset, int bufferLength, out byte[] value, int arrayLength)
         {
             value = null;
-            if (buffer.Length - offset < length)
+            if (buffer.Length - offset < arrayLength)
                 return false;
-            value = new byte[length];
-            Array.Copy(buffer, offset, value, 0, length);
-            offset += length;
+            value = new byte[arrayLength];
+            Array.Copy(buffer, offset, value, 0, arrayLength);
+            offset += arrayLength;
             return true;
         }
 

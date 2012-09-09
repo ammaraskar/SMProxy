@@ -25,19 +25,19 @@ namespace SMProxy.Packets
         {
             int offset = 1;
             byte gameMode, dimension, difficulty, discarded;
-            if (!DataUtility.TryReadInt32(buffer, ref offset, out EntityId))
+            if (!DataUtility.TryReadInt32(buffer, ref offset, length, out EntityId))
                 return -1;
-            if (!DataUtility.TryReadString(buffer, ref offset, out LevelType))
+            if (!DataUtility.TryReadString(buffer, ref offset, length, out LevelType))
                 return -1;
-            if (!DataUtility.TryReadByte(buffer, ref offset, out gameMode))
+            if (!DataUtility.TryReadByte(buffer, ref offset, length, out gameMode))
                 return -1;
-            if (!DataUtility.TryReadByte(buffer, ref offset, out dimension))
+            if (!DataUtility.TryReadByte(buffer, ref offset, length, out dimension))
                 return -1;
-            if (!DataUtility.TryReadByte(buffer, ref offset, out difficulty))
+            if (!DataUtility.TryReadByte(buffer, ref offset, length, out difficulty))
                 return -1;
-            if (!DataUtility.TryReadByte(buffer, ref offset, out discarded))
+            if (!DataUtility.TryReadByte(buffer, ref offset, length, out discarded))
                 return -1;
-            if (!DataUtility.TryReadByte(buffer, ref offset, out MaxPlayers))
+            if (!DataUtility.TryReadByte(buffer, ref offset, length, out MaxPlayers))
                 return -1;
             GameMode = (GameMode)gameMode;
             Dimension = (Dimension)dimension;

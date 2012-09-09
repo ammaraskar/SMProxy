@@ -27,23 +27,23 @@ namespace SMProxy.Packets
         {
             int offset = 1;
             double x, y, z;
-            if (!DataUtility.TryReadDouble(buffer, ref offset, out x))
+            if (!DataUtility.TryReadDouble(buffer, ref offset, length, out x))
                 return -1;
-            if (!DataUtility.TryReadDouble(buffer, ref offset, out y))
+            if (!DataUtility.TryReadDouble(buffer, ref offset, length, out y))
                 return -1;
-            if (!DataUtility.TryReadDouble(buffer, ref offset, out z))
+            if (!DataUtility.TryReadDouble(buffer, ref offset, length, out z))
                 return -1;
-            if (!DataUtility.TryReadFloat(buffer, ref offset, out Radius))
+            if (!DataUtility.TryReadFloat(buffer, ref offset, length, out Radius))
                 return -1;
-            if (!DataUtility.TryReadInt32(buffer, ref offset, out Records))
+            if (!DataUtility.TryReadInt32(buffer, ref offset, length, out Records))
                 return -1;
-            if (!DataUtility.TryReadArray(buffer, (short)(Records * 3), ref offset, out RecordData))
+            if (!DataUtility.TryReadArray(buffer, ref offset, length, out RecordData, (short)(Records * 3)))
                 return -1;
-            if (!DataUtility.TryReadFloat(buffer, ref offset, out Unknown1))
+            if (!DataUtility.TryReadFloat(buffer, ref offset, length, out Unknown1))
                 return -1;
-            if (!DataUtility.TryReadFloat(buffer, ref offset, out Unknown2))
+            if (!DataUtility.TryReadFloat(buffer, ref offset, length, out Unknown2))
                 return -1;
-            if (!DataUtility.TryReadFloat(buffer, ref offset, out Unknown3))
+            if (!DataUtility.TryReadFloat(buffer, ref offset, length, out Unknown3))
                 return -1;
             return offset;
         }

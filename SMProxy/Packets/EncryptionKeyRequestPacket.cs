@@ -23,15 +23,15 @@ namespace SMProxy.Packets
         {
             int offset = 1;
             short serverKeyLength = 0, verifyTokenLength = 0;
-            if (!DataUtility.TryReadString(buffer, ref offset, out ServerId))
+            if (!DataUtility.TryReadString(buffer, ref offset, length, out ServerId))
                 return -1;
-            if (!DataUtility.TryReadInt16(buffer, ref offset, out serverKeyLength))
+            if (!DataUtility.TryReadInt16(buffer, ref offset, length, out serverKeyLength))
                 return -1;
-            if (!DataUtility.TryReadArray(buffer, serverKeyLength, ref offset, out PublicKey))
+            if (!DataUtility.TryReadArray(buffer, ref offset, length, out PublicKey, serverKeyLength))
                 return -1;
-            if (!DataUtility.TryReadInt16(buffer, ref offset, out verifyTokenLength))
+            if (!DataUtility.TryReadInt16(buffer, ref offset, length, out verifyTokenLength))
                 return -1;
-            if (!DataUtility.TryReadArray(buffer, verifyTokenLength, ref offset, out VerifyToken))
+            if (!DataUtility.TryReadArray(buffer, ref offset, length, out VerifyToken, verifyTokenLength))
                 return -1;
             return offset;
         }

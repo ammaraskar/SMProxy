@@ -25,30 +25,36 @@ namespace SMProxy
 
             // TEST CODE
 
-            Proxy test = new Proxy(null, settings);
-            test.RemoteEncryptionEnabled = true;
-            byte[] data = new byte[] { 0x38, 0, 1, 0, 0, 0, 8, 1, 2, 3, 4, 5, 6, 7, 8 };
-            test.RemoteSharedKey = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
-            test.RemoteEncrypter = new BufferedBlockCipher(new CfbBlockCipher(new AesFastEngine(), 8));
-            test.RemoteEncrypter.Init(true,
-                                  new ParametersWithIV(new KeyParameter(test.RemoteSharedKey), test.RemoteSharedKey, 0, 16));
+            PacketReader reader = new PacketReader(PacketContext.ClientToServer);
+            byte[] key = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
 
-            test.RemoteDecrypter = new BufferedBlockCipher(new CfbBlockCipher(new AesFastEngine(), 8));
-            test.RemoteDecrypter.Init(false,
-                                  new ParametersWithIV(new KeyParameter(test.RemoteSharedKey), test.RemoteSharedKey, 0, 16));
-            data = test.RemoteEncrypter.ProcessBytes(data);
-            Array.Copy(data, 0, test.RemoteBuffer, test.RemoteIndex, data.Length);
-            var packets = PacketReader.TryReadPackets(test, data.Length, PacketContext.ServerToClient);
+            var encrypter = new BufferedBlockCipher(new CfbBlockCipher(new AesFastEngine(), 8));
+            encrypter.Init(true, new ParametersWithIV(new KeyParameter(key), key, 0, 16));
 
-            data = new byte[] { 0xF0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
-            data = test.RemoteEncrypter.ProcessBytes(data);
-            Array.Copy(data, 0, test.RemoteBuffer, test.RemoteIndex, data.Length);
-            packets = PacketReader.TryReadPackets(test, data.Length, PacketContext.ServerToClient);
+            reader.Decrypter = new BufferedBlockCipher(new CfbBlockCipher(new AesFastEngine(), 8));
+            reader.Decrypter.Init(false, new ParametersWithIV(new KeyParameter(key), key, 0, 16));
+            reader.EncryptionEnabled = true;
 
-            data = new byte[] { 1, 1, 2, 2 };
-            data = test.RemoteEncrypter.ProcessBytes(data);
-            Array.Copy(data, 0, test.RemoteBuffer, test.RemoteIndex, data.Length);
-            packets = PacketReader.TryReadPackets(test, data.Length, PacketContext.ServerToClient);
+            byte[] data = new byte[] { 0 };
+            data = encrypter.ProcessBytes(data);
+
+            Array.Copy(data, 0, reader.Buffer, reader.Index, data.Length);
+            var packets = reader.TryReadPackets(data.Length);
+
+            data = new byte[] { 1, 2, 3, 4, 0, 1, 2, 3, 4, 0 };
+            data = encrypter.ProcessBytes(data);
+            Array.Copy(data, 0, reader.Buffer, reader.Index, data.Length);
+            packets = reader.TryReadPackets(data.Length);
+
+            data = new byte[] { 1, 2, 3 };
+            data = encrypter.ProcessBytes(data);
+            Array.Copy(data, 0, reader.Buffer, reader.Index, data.Length);
+            packets = reader.TryReadPackets(data.Length);
+
+            data = new byte[] { 4, 0 };
+            data = encrypter.ProcessBytes(data);
+            Array.Copy(data, 0, reader.Buffer, reader.Index, data.Length);
+            packets = reader.TryReadPackets(data.Length);
 
             // END TEST CODE
 

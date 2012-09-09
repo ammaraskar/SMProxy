@@ -15,7 +15,6 @@ namespace SMProxy
     {
         public const int ProtocolVersion = 39;
 
-        private const int BufferSize = 4096 * 64; // TODO: Dynamic buffer resizing
         internal static RSAParameters ServerKey;
         internal static RSACryptoServiceProvider CryptoServiceProvider;
 
@@ -28,22 +27,18 @@ namespace SMProxy
 
         public Proxy(ILogProvider logProvider, ProxySettings settings)
         {
-            LocalEncryptionEnabled = RemoteEncryptionEnabled = false;
-            LocalBuffer = new byte[BufferSize];
-            RemoteBuffer = new byte[BufferSize];
             LogProvider = logProvider;
             Settings = settings;
+            LocalReader = new PacketReader(PacketContext.ClientToServer);
+            RemoteReader = new PacketReader(PacketContext.ServerToClient);
         }
 
         public ProxySettings Settings;
         public Socket LocalSocket, RemoteSocket;
-        public bool LocalEncryptionEnabled, RemoteEncryptionEnabled;
-        public BufferedBlockCipher LocalEncrypter, LocalDecrypter;
-        public BufferedBlockCipher RemoteEncrypter, RemoteDecrypter;
-        public bool Connected { get; set; }
+        public bool Connected { get; private set; }
         public ILogProvider LogProvider { get; set; }
-        internal byte[] LocalBuffer, RemoteBuffer;
-        internal int LocalIndex, RemoteIndex;
+        public PacketReader RemoteReader, LocalReader;
+        public BufferedBlockCipher LocalEncrypter, RemoteEncrypter;
         internal byte[] LocalSharedKey, RemoteSharedKey;
         internal byte[] RemoteEncryptionResponse;
 
@@ -57,15 +52,16 @@ namespace SMProxy
             LocalSocket = localSocket;
             RemoteSocket = remoteSocket;
             Connected = true;
-            LocalSocket.BeginReceive(LocalBuffer, 0, LocalBuffer.Length, SocketFlags.None, HandleLocalPackets, null);
-            RemoteSocket.BeginReceive(RemoteBuffer, 0, RemoteBuffer.Length, SocketFlags.None, HandleRemotePackets, null);
+            LocalSocket.BeginReceive(LocalReader.Buffer, 0, LocalReader.Buffer.Length, SocketFlags.None, HandleLocalPackets, null);
+            RemoteSocket.BeginReceive(RemoteReader.Buffer, 0, RemoteReader.Buffer.Length, SocketFlags.None, HandleRemotePackets, null);
         }
 
         internal void HandleLocalPackets(IAsyncResult result)
         {
             SocketError error;
-            int length = LocalSocket.EndReceive(result, out error) + LocalIndex;
-            if (error != SocketError.Success || !LocalSocket.Connected || length == LocalIndex)
+            int length = LocalSocket.EndReceive(result, out error);
+            // Check for errors and disconnect if needed
+            if (error != SocketError.Success || !LocalSocket.Connected || length == 0)
             {
                 if (error != SocketError.Success)
                     LogProvider.Log("Local client " + LocalSocket.RemoteEndPoint + " disconnected: " + error);
@@ -78,39 +74,43 @@ namespace SMProxy
                     Process.GetCurrentProcess().Kill();
                 return;
             }
+
+            // Attempt to parse recieved data
             try
             {
-                var packets = PacketReader.TryReadPackets(this, length, PacketContext.ClientToServer);
-                foreach (Packet packet in packets)
+                var packets = LocalReader.TryReadPackets(length);
+                foreach (var packet in packets)
                 {
+                    // If an invalid packet was sent...
                     if (packet is InvalidPacket)
                     {
+                        // ...send it straight back without parsing it, then switch to raw mode.
+                        // TODO: Refactor?
+                        if (RemoteReader.EncryptionEnabled)
+                            RemoteSocket.BeginSend(RemoteEncrypter.ProcessBytes(packet.Payload), 0, packet.Payload.Length, SocketFlags.None, null, null);
+                        else
+                            RemoteSocket.BeginSend(packet.Payload, 0, packet.Payload.Length, SocketFlags.None, null, null);
+                        LogProvider.Log("Client sent unrecognized packet: 0x" + packet.PacketId.ToString("X2") + ". Switching client to generic TCP proxy");
                         LogProvider.Raw(packet.Payload, this, PacketContext.ClientToServer);
-                        if (RemoteSocket.Connected && !packet.OverrideSendPacket())
-                        {
-                            if (RemoteEncryptionEnabled)
-                                RemoteSocket.BeginSend(RemoteEncrypter.ProcessBytes(packet.Payload), 0, packet.Payload.Length, SocketFlags.None, null, null);
-                            else
-                                RemoteSocket.BeginSend(packet.Payload, 0, packet.Payload.Length, SocketFlags.None, null, null);
-                        }
-                        throw new InvalidOperationException("Unrecognized packet: 0x" + packet.PacketId.ToString("X2"));
+                        LocalSocket.BeginReceive(LocalReader.Buffer, 0, LocalReader.Buffer.Length, SocketFlags.None, HandleLocalRaw, null);
+                        return;
                     }
                     packet.HandlePacket(this);
-                    LogProvider.Log(packet, this);
-                    if (RemoteSocket.Connected && !packet.OverrideSendPacket() && !Settings.ServerSupressedPackets.Contains(packet.PacketId))
+                    if (!packet.OverrideSendPacket())
                     {
-                        if (RemoteEncryptionEnabled)
+                        if (RemoteReader.EncryptionEnabled)
                             RemoteSocket.BeginSend(RemoteEncrypter.ProcessBytes(packet.Payload), 0, packet.Payload.Length, SocketFlags.None, null, null);
                         else
                             RemoteSocket.BeginSend(packet.Payload, 0, packet.Payload.Length, SocketFlags.None, null, null);
                     }
+                    LogProvider.Log(packet, this);
                 }
-                LocalSocket.BeginReceive(LocalBuffer, LocalIndex, LocalBuffer.Length - LocalIndex, SocketFlags.None, HandleLocalPackets, null);
+                LocalSocket.BeginReceive(LocalReader.Buffer, LocalReader.Index, LocalReader.Buffer.Length - LocalReader.Index, SocketFlags.None, HandleLocalPackets, null);
             }
             catch (Exception e)
             {
                 LogProvider.Log("Client exception: \"" + e.Message + "\" Switching client to generic TCP proxy");
-                LocalSocket.BeginReceive(LocalBuffer, 0, LocalBuffer.Length, SocketFlags.None, HandleLocalRaw, null);
+                LocalSocket.BeginReceive(LocalReader.Buffer, 0, LocalReader.Buffer.Length, SocketFlags.None, HandleLocalRaw, null);
             }
         }
 
@@ -135,28 +135,14 @@ namespace SMProxy
                 return;
             }
 
-            byte[] payload = new byte[length];
-            Array.Copy(LocalBuffer, 0, payload, 0, length);
-
-            if (LocalEncryptionEnabled)
-                payload = LocalDecrypter.ProcessBytes(payload);
-
-            LogProvider.Raw(payload, this, PacketContext.ClientToServer);
-
-            if (RemoteEncryptionEnabled)
-                payload = RemoteEncrypter.ProcessBytes(payload);
-
-            if (RemoteSocket.Connected)
-                RemoteSocket.BeginSend(payload, 0, payload.Length, SocketFlags.None, null, null);
-            if (LocalSocket.Connected)
-                LocalSocket.BeginReceive(LocalBuffer, 0, LocalBuffer.Length, SocketFlags.None, HandleLocalRaw, null);
+            // TODO
         }
 
         internal void HandleRemotePackets(IAsyncResult result)
         {
             SocketError error;
-            int length = RemoteSocket.EndReceive(result, out error) + RemoteIndex;
-            if (error != SocketError.Success || !RemoteSocket.Connected || length == RemoteIndex)
+            int length = RemoteSocket.EndReceive(result, out error);
+            if (error != SocketError.Success || !RemoteSocket.Connected || length == 0)
             {
                 string log;
                 if (error != SocketError.Success)
@@ -172,39 +158,43 @@ namespace SMProxy
                     Process.GetCurrentProcess().Kill();
                 return;
             }
+
+            // Attempt to parse recieved data
             try
             {
-                var packets = PacketReader.TryReadPackets(this, length, PacketContext.ServerToClient);
-                foreach (Packet packet in packets)
+                var packets = RemoteReader.TryReadPackets(length);
+                foreach (var packet in packets)
                 {
+                    // If an invalid packet was sent...
                     if (packet is InvalidPacket)
                     {
+                        // ...send it straight back without parsing it, then switch to raw mode.
+                        // TODO: Refactor?
+                        if (LocalReader.EncryptionEnabled)
+                            LocalSocket.BeginSend(LocalEncrypter.ProcessBytes(packet.Payload), 0, packet.Payload.Length, SocketFlags.None, null, null);
+                        else
+                            LocalSocket.BeginSend(packet.Payload, 0, packet.Payload.Length, SocketFlags.None, null, null);
+                        LogProvider.Log("Server sent unrecognized packet: 0x" + packet.PacketId.ToString("X2") + ". Switching server to generic TCP proxy");
                         LogProvider.Raw(packet.Payload, this, PacketContext.ServerToClient);
-                        if (LocalSocket.Connected && !packet.OverrideSendPacket())
-                        {
-                            if (LocalEncryptionEnabled)
-                                LocalSocket.BeginSend(LocalEncrypter.ProcessBytes(packet.Payload), 0, packet.Payload.Length, SocketFlags.None, null, null);
-                            else
-                                LocalSocket.BeginSend(packet.Payload, 0, packet.Payload.Length, SocketFlags.None, null, null);
-                        }
-                        throw new InvalidOperationException("Unrecognized packet: 0x" + packet.PacketId.ToString("X2"));
+                        RemoteSocket.BeginReceive(RemoteReader.Buffer, 0, RemoteReader.Buffer.Length, SocketFlags.None, HandleRemoteRaw, null);
+                        return;
                     }
                     packet.HandlePacket(this);
-                    LogProvider.Log(packet, this);
-                    if (LocalSocket.Connected && !packet.OverrideSendPacket() && !Settings.ClientSupressedPackets.Contains(packet.PacketId))
+                    if (!packet.OverrideSendPacket())
                     {
-                        if (LocalEncryptionEnabled)
+                        if (LocalReader.EncryptionEnabled)
                             LocalSocket.BeginSend(LocalEncrypter.ProcessBytes(packet.Payload), 0, packet.Payload.Length, SocketFlags.None, null, null);
                         else
                             LocalSocket.BeginSend(packet.Payload, 0, packet.Payload.Length, SocketFlags.None, null, null);
                     }
+                    LogProvider.Log(packet, this);
                 }
-                RemoteSocket.BeginReceive(RemoteBuffer, RemoteIndex, RemoteBuffer.Length - RemoteIndex, SocketFlags.None, HandleRemotePackets, null);
+                RemoteSocket.BeginReceive(RemoteReader.Buffer, RemoteReader.Index, RemoteReader.Buffer.Length - RemoteReader.Index, SocketFlags.None, HandleRemotePackets, null);
             }
             catch (Exception e)
             {
                 LogProvider.Log("Server exception: \"" + e.Message + "\" Switching server to generic TCP proxy");
-                RemoteSocket.BeginReceive(RemoteBuffer, 0, RemoteBuffer.Length, SocketFlags.None, HandleRemoteRaw, null);
+                RemoteSocket.BeginReceive(RemoteReader.Buffer, 0, RemoteReader.Buffer.Length, SocketFlags.None, HandleRemoteRaw, null);
             }
         }
 
@@ -226,21 +216,7 @@ namespace SMProxy
                 return;
             }
 
-            byte[] payload = new byte[length];
-            Array.Copy(RemoteBuffer, 0, payload, 0, length);
-
-            if (RemoteEncryptionEnabled)
-                payload = RemoteDecrypter.ProcessBytes(payload);
-
-            LogProvider.Raw(payload, this, PacketContext.ServerToClient);
-
-            if (LocalEncryptionEnabled)
-                payload = LocalEncrypter.ProcessBytes(payload);
-
-            if (LocalSocket.Connected)
-                LocalSocket.BeginSend(payload, 0, payload.Length, SocketFlags.None, null, null);
-            if (RemoteSocket.Connected)
-                RemoteSocket.BeginReceive(RemoteBuffer, 0, RemoteBuffer.Length, SocketFlags.None, HandleRemoteRaw, null);
+            // TODO
         }
     }
 }

@@ -21,7 +21,7 @@ namespace Craft.Net.Data.Metadata
         /// <summary>
         /// Assume that offset points to the key.
         /// </summary>
-        public abstract bool TryReadEntry(byte[] buffer, ref int offset);
+        public abstract bool TryReadEntry(byte[] buffer, ref int offset, int length);
 
         public abstract byte[] Encode();
 

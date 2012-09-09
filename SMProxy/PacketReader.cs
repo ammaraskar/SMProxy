@@ -3,12 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using SMProxy.Packets;
+using Org.BouncyCastle.Crypto;
 
 namespace SMProxy
 {
     // Based on the PacketReader from Craft.Net
     public class PacketReader
     {
+        private const int bufferSize = 4096 * 64;
+
         #region Packet type array
 
         public static readonly Type[] PacketTypes =
@@ -273,85 +276,57 @@ namespace SMProxy
 
         #endregion
 
+        public PacketReader(PacketContext context)
+        {
+            Buffer = new byte[bufferSize];
+            Index = 0;
+            EncryptionEnabled = false;
+            Context = context;
+        }
+
+        public byte[] Buffer { get; set; }
+        public int Index { get; set; }
+        public bool EncryptionEnabled { get; set; }
+        public BufferedBlockCipher Encrypter { get; set; }
+        public BufferedBlockCipher Decrypter { get; set; }
+        public PacketContext Context { get; set; }
+
         /// <summary>
         /// Attempts to parse all packets in the given client and update
         /// its buffer.
         /// </summary>
-        public static IEnumerable<Packet> TryReadPackets(Proxy proxy, int length, PacketContext packetContext)
+        public IEnumerable<Packet> TryReadPackets(int length)
         {
-            // Coming into this code, the proxy has a few possible states:
-            // 1. The recieve index == 0, meaning that there were no incomplete packets from the last time this code ran.
-            // 2. The recieve index != 0, meaning that the last time this ran, there was an incomplete packet that was
-            //    copied in decrypted form to the start of the buffer, and encrypted data (that completes the packet)
-            //    was appended to it. We need to decrypt the encrypted data, which contains the remainder of the incomplete
-            //    packet, and then we can parse it. Decrypting the already decrypted incomplete packet again will cause
-            //    problems.
-            // In either case, the buffer has some amount of data in it that has been recieved from the remote endpoint.
-            // This data may be encrypted, and the amount of data /recieved/ (not including the prior incomplete packet)
-            // is represented by the length variable. The total size of the buffer is lengh + recieve index. The recieve
-            // index represents the starting index to recieve further data to, and is set by this method if it sees an
-            // incomplete packet. In case 1, it is always zero. In case 2, it is the length of the data already seen.
-
             var results = new List<Packet>();
-            // buffer is a shrinking buffer of bytes to be interpreted as packets.
-            byte[] buffer;
-            // Get a buffer to parse that is the length of the recieved data
-            // Fetch from the network buffer the last incomplete packet (proxy.*Index) plus the length of the data
-            // read in the latest chunk of data.
-            if (packetContext == PacketContext.ClientToServer)
-                buffer = proxy.LocalBuffer.Take(proxy.LocalIndex + length).ToArray();
-            else
-                buffer = proxy.RemoteBuffer.Take(proxy.RemoteIndex + length).ToArray();
-            // Decrypt the buffer if needed
-            // If encryption is enabled, the previous packet will be decrypted, and the appended data
-            // will not be. We must only decrypt the latest data, so we send just that data into the
-            // decrypter and copy it back into the buffer.
-            if (packetContext == PacketContext.ClientToServer && proxy.LocalEncryptionEnabled)
-                Array.Copy(proxy.LocalDecrypter.ProcessBytes(buffer, proxy.LocalIndex, length), 0, buffer, proxy.LocalIndex, length);
-            else if (packetContext == PacketContext.ServerToClient && proxy.RemoteEncryptionEnabled)
-                Array.Copy(proxy.RemoteDecrypter.ProcessBytes(buffer, proxy.RemoteIndex, length), 0, buffer, proxy.RemoteIndex, length);
-
-            length += packetContext == PacketContext.ClientToServer ? proxy.LocalIndex : proxy.RemoteIndex; // Update the length to include the incomplete packet
-            while (buffer.Length > 0) // As long as the buffer is not empty
+            // Decrypt recieved data if needed
+            if (EncryptionEnabled)
+                Array.Copy(Decrypter.ProcessBytes(Buffer, Index, length), 0, Buffer, Index, length);
+            length += Index;
+            while (length > 0)
             {
-                Type packetType = PacketTypes[buffer[0]]; // Get the correct type to parse this packet based on the first byte of the data
+                var packetType = PacketTypes[Buffer[0]];
                 if (packetType == null)
                 {
-                    // If there is no packet handler, it's an invalid packet.
-                    results.Add(new InvalidPacket(buffer));
+                    // Unrecognized packet
+                    results.Add(new InvalidPacket(Buffer.Take(length).ToArray()));
                     return results;
                 }
-                var workingPacket = (Packet)Activator.CreateInstance(packetType);
-                workingPacket.PacketContext = packetContext;
-                // Attempt to read the packet, returns the length of the read packet or -1
-                int workingLength = workingPacket.TryReadPacket(buffer, buffer.Length);
-                if (workingLength == -1) // Incomplete packet
+                var packet = (Packet)Activator.CreateInstance(packetType);
+                packet.PacketContext = Context;
+                var packetLength = packet.TryReadPacket(Buffer, length);
+                if (packetLength < 0)
                 {
-                    // Copy the incomplete packet into the recieve buffer and recieve more data
-                    if (packetContext == PacketContext.ClientToServer)
-                    {
-                        // Copy the current packet buffer into the start of network buffer (decrypted)
-                        Array.Copy(buffer, proxy.LocalBuffer, buffer.Length);
-                        // Set the starting index to the end of that
-                        proxy.LocalIndex = buffer.Length;
-                    }
-                    else
-                    {
-                        Array.Copy(buffer, proxy.RemoteBuffer, buffer.Length);
-                        proxy.RemoteIndex = buffer.Length;
-                    }
+                    // Incomplete packet
+                    Index = length;
                     return results;
                 }
-                // Copy the payload from the buffer into the working packet
-                // so it may be re-sent and logged.
-                workingPacket.Payload = new byte[workingLength];
-                Array.Copy(buffer, workingPacket.Payload, workingLength);
-                // Add this packet to the results
-                results.Add(workingPacket);
-                // Shift the buffer over and remove the packet just parsed
-                buffer = buffer.Skip(workingLength).ToArray();
+                packet.Payload = new byte[packetLength];
+                Array.Copy(Buffer, packet.Payload, packetLength);
+                results.Add(packet);
+                // Shift the buffer over
+                length -= packetLength;
+                Array.Copy(Buffer, packetLength, Buffer, 0, length);
             }
-
             return results;
         }
     }

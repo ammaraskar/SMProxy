@@ -25,19 +25,19 @@ namespace SMProxy.Packets
             double x, y, z;
             ushort id, metadata;
             byte count;
-            if (!DataUtility.TryReadInt32(buffer, ref offset, out EntityId))
+            if (!DataUtility.TryReadInt32(buffer, ref offset, length, out EntityId))
                 return -1;
-            if (!DataUtility.TryReadUInt16(buffer, ref offset, out id))
+            if (!DataUtility.TryReadUInt16(buffer, ref offset, length, out id))
                 return -1;
-            if (!DataUtility.TryReadByte(buffer, ref offset, out count))
+            if (!DataUtility.TryReadByte(buffer, ref offset, length, out count))
                 return -1;
-            if (!DataUtility.TryReadUInt16(buffer, ref offset, out metadata))
+            if (!DataUtility.TryReadUInt16(buffer, ref offset, length, out metadata))
                 return -1;
-            if (!DataUtility.TryReadAbsoluteInteger(buffer, ref offset, out x))
+            if (!DataUtility.TryReadAbsoluteInteger(buffer, ref offset, length, out x))
                 return -1;
-            if (!DataUtility.TryReadAbsoluteInteger(buffer, ref offset, out y))
+            if (!DataUtility.TryReadAbsoluteInteger(buffer, ref offset, length, out y))
                 return -1;
-            if (!DataUtility.TryReadAbsoluteInteger(buffer, ref offset, out z))
+            if (!DataUtility.TryReadAbsoluteInteger(buffer, ref offset, length, out z))
                 return -1;
             if (!DataUtility.TryReadPackedByte(buffer, ref offset, out Rotation))
                 return -1;

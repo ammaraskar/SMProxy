@@ -21,13 +21,13 @@ namespace SMProxy.Packets
             int offset = 1;
             byte textLength;
             byte[] text;
-            if (!DataUtility.TryReadInt16(buffer, ref offset, out ItemType))
+            if (!DataUtility.TryReadInt16(buffer, ref offset, length, out ItemType))
                 return -1;
-            if (!DataUtility.TryReadInt16(buffer, ref offset, out ItemId))
+            if (!DataUtility.TryReadInt16(buffer, ref offset, length, out ItemId))
                 return -1;
-            if (!DataUtility.TryReadByte(buffer, ref offset, out textLength))
+            if (!DataUtility.TryReadByte(buffer, ref offset, length, out textLength))
                 return -1;
-            if (!DataUtility.TryReadArray(buffer, textLength, ref offset, out text))
+            if (!DataUtility.TryReadArray(buffer, ref offset, length, out text, textLength))
                 return -1;
             Text = Encoding.ASCII.GetString(text);
             return offset;

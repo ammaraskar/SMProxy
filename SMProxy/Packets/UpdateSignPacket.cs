@@ -23,19 +23,19 @@ namespace SMProxy.Packets
             int offset = 1;
             int x, z;
             short y;
-            if (!DataUtility.TryReadInt32(buffer, ref offset, out x))
+            if (!DataUtility.TryReadInt32(buffer, ref offset, length, out x))
                 return -1;
-            if (!DataUtility.TryReadInt16(buffer, ref offset, out y))
+            if (!DataUtility.TryReadInt16(buffer, ref offset, length, out y))
                 return -1;
-            if (!DataUtility.TryReadInt32(buffer, ref offset, out z))
+            if (!DataUtility.TryReadInt32(buffer, ref offset, length, out z))
                 return -1;
-            if (!DataUtility.TryReadString(buffer, ref offset, out Line1))
+            if (!DataUtility.TryReadString(buffer, ref offset, length, out Line1))
                 return -1;
-            if (!DataUtility.TryReadString(buffer, ref offset, out Line2))
+            if (!DataUtility.TryReadString(buffer, ref offset, length, out Line2))
                 return -1;
-            if (!DataUtility.TryReadString(buffer, ref offset, out Line3))
+            if (!DataUtility.TryReadString(buffer, ref offset, length, out Line3))
                 return -1;
-            if (!DataUtility.TryReadString(buffer, ref offset, out Line4))
+            if (!DataUtility.TryReadString(buffer, ref offset, length, out Line4))
                 return -1;
             Position = new Vector3(x, y, z);
             return offset;

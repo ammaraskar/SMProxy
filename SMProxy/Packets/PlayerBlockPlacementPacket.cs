@@ -22,21 +22,21 @@ namespace SMProxy.Packets
             int offset = 1;
             int x, z;
             byte y, curX, curY, curZ;
-            if (!DataUtility.TryReadInt32(buffer, ref offset, out x))
+            if (!DataUtility.TryReadInt32(buffer, ref offset, length, out x))
                 return -1;
-            if (!DataUtility.TryReadByte(buffer, ref offset, out y))
+            if (!DataUtility.TryReadByte(buffer, ref offset, length, out y))
                 return -1;
-            if (!DataUtility.TryReadInt32(buffer, ref offset, out z))
+            if (!DataUtility.TryReadInt32(buffer, ref offset, length, out z))
                 return -1;
-            if (!DataUtility.TryReadByte(buffer, ref offset, out Direction))
+            if (!DataUtility.TryReadByte(buffer, ref offset, length, out Direction))
                 return -1;
-            if (!Slot.TryReadSlot(buffer, ref offset, out HeldItem))
+            if (!Slot.TryReadSlot(buffer, ref offset, length, out HeldItem))
                 return -1;
-            if (!DataUtility.TryReadByte(buffer, ref offset, out curX))
+            if (!DataUtility.TryReadByte(buffer, ref offset, length, out curX))
                 return -1;
-            if (!DataUtility.TryReadByte(buffer, ref offset, out curY))
+            if (!DataUtility.TryReadByte(buffer, ref offset, length, out curY))
                 return -1;
-            if (!DataUtility.TryReadByte(buffer, ref offset, out curZ))
+            if (!DataUtility.TryReadByte(buffer, ref offset, length, out curZ))
                 return -1;
             Position = new Vector3(x, y, z);
             Cursor = new Vector3(curX, curY, curZ);

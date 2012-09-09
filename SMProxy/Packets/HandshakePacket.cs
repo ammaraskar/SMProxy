@@ -20,13 +20,13 @@ namespace SMProxy.Packets
         public override int TryReadPacket(byte[] buffer, int length)
         {
             int offset = 1;
-            if (!DataUtility.TryReadByte(buffer, ref offset, out ProtocolVersion))
+            if (!DataUtility.TryReadByte(buffer, ref offset, length, out ProtocolVersion))
                 return -1;
-            if (!DataUtility.TryReadString(buffer, ref offset, out Username))
+            if (!DataUtility.TryReadString(buffer, ref offset, length, out Username))
                 return -1;
-            if (!DataUtility.TryReadString(buffer, ref offset, out Hostname))
+            if (!DataUtility.TryReadString(buffer, ref offset, length, out Hostname))
                 return -1;
-            if (!DataUtility.TryReadInt32(buffer, ref offset, out ServerPort))
+            if (!DataUtility.TryReadInt32(buffer, ref offset, length, out ServerPort))
                 return -1;
             return offset;
         }

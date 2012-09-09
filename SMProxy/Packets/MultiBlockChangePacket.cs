@@ -21,15 +21,15 @@ namespace SMProxy.Packets
         {
             int offset = 1;
             int dataLength;
-            if (!DataUtility.TryReadInt32(buffer, ref offset, out ChunkX))
+            if (!DataUtility.TryReadInt32(buffer, ref offset, length, out ChunkX))
                 return -1;
-            if (!DataUtility.TryReadInt32(buffer, ref offset, out ChunkZ))
+            if (!DataUtility.TryReadInt32(buffer, ref offset, length, out ChunkZ))
                 return -1;
-            if (!DataUtility.TryReadInt16(buffer, ref offset, out BlocksAffected))
+            if (!DataUtility.TryReadInt16(buffer, ref offset, length, out BlocksAffected))
                 return -1;
-            if (!DataUtility.TryReadInt32(buffer, ref offset, out dataLength))
+            if (!DataUtility.TryReadInt32(buffer, ref offset, length, out dataLength))
                 return -1;
-            if (!DataUtility.TryReadArray(buffer, dataLength, ref offset, out Data))
+            if (!DataUtility.TryReadArray(buffer, ref offset, length, out Data, dataLength))
                 return -1;
             return offset;
         }

@@ -19,11 +19,11 @@ namespace SMProxy.Packets
         public override int TryReadPacket(byte[] buffer, int length)
         {
             int offset = 1;
-            if (!DataUtility.TryReadString(buffer, ref offset, out PlayerName))
+            if (!DataUtility.TryReadString(buffer, ref offset, length, out PlayerName))
                 return -1;
-            if (!DataUtility.TryReadBoolean(buffer, ref offset, out Online))
+            if (!DataUtility.TryReadBoolean(buffer, ref offset, length, out Online))
                 return -1;
-            if (!DataUtility.TryReadInt16(buffer, ref offset, out Ping))
+            if (!DataUtility.TryReadInt16(buffer, ref offset, length, out Ping))
                 return -1;
             return offset;
         }

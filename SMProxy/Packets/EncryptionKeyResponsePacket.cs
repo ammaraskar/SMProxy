@@ -26,13 +26,13 @@ namespace SMProxy.Packets
         {
             short secretLength = 0, verifyLength = 0;
             int offset = 1;
-            if (!DataUtility.TryReadInt16(buffer, ref offset, out secretLength))
+            if (!DataUtility.TryReadInt16(buffer, ref offset, length, out secretLength))
                 return -1;
-            if (!DataUtility.TryReadArray(buffer, secretLength, ref offset, out SharedSecret))
+            if (!DataUtility.TryReadArray(buffer, ref offset, length, out SharedSecret, secretLength))
                 return -1;
-            if (!DataUtility.TryReadInt16(buffer, ref offset, out verifyLength))
+            if (!DataUtility.TryReadInt16(buffer, ref offset, length, out verifyLength))
                 return -1;
-            if (!DataUtility.TryReadArray(buffer, verifyLength, ref offset, out VerifyToken))
+            if (!DataUtility.TryReadArray(buffer, ref offset, length, out VerifyToken, verifyLength))
                 return -1;
             return offset;
         }
@@ -50,8 +50,8 @@ namespace SMProxy.Packets
                 proxy.LocalEncrypter.Init(true,
                                       new ParametersWithIV(new KeyParameter(proxy.LocalSharedKey), proxy.LocalSharedKey, 0, 16));
 
-                proxy.LocalDecrypter = new BufferedBlockCipher(new CfbBlockCipher(new AesFastEngine(), 8));
-                proxy.LocalDecrypter.Init(false,
+                proxy.LocalReader.Decrypter = new BufferedBlockCipher(new CfbBlockCipher(new AesFastEngine(), 8));
+                proxy.LocalReader.Decrypter.Init(false,
                                       new ParametersWithIV(new KeyParameter(proxy.LocalSharedKey), proxy.LocalSharedKey, 0, 16));
 
                 // Send server mock response
@@ -64,13 +64,13 @@ namespace SMProxy.Packets
                 proxy.RemoteEncrypter.Init(true,
                                       new ParametersWithIV(new KeyParameter(proxy.RemoteSharedKey), proxy.RemoteSharedKey, 0, 16));
 
-                proxy.RemoteDecrypter = new BufferedBlockCipher(new CfbBlockCipher(new AesFastEngine(), 8));
-                proxy.RemoteDecrypter.Init(false,
+                proxy.RemoteReader.Decrypter = new BufferedBlockCipher(new CfbBlockCipher(new AesFastEngine(), 8));
+                proxy.RemoteReader.Decrypter.Init(false,
                                       new ParametersWithIV(new KeyParameter(proxy.RemoteSharedKey), proxy.RemoteSharedKey, 0, 16));
 
                 var response = new byte[] { 0xFC, 0x00, 0x00, 0x00, 0x00 };
                 proxy.LocalSocket.BeginSend(response, 0, response.Length, SocketFlags.None, null, null);
-                proxy.RemoteEncryptionEnabled = proxy.LocalEncryptionEnabled = true;
+                proxy.RemoteReader.EncryptionEnabled = proxy.LocalReader.EncryptionEnabled = true;
                 proxy.LogProvider.Log("Encryption enabled.");
             }
         }
