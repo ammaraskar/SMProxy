@@ -35,10 +35,13 @@ namespace SMProxy.Packets
                 return -1;
             if (!DataUtility.TryReadInt16(buffer, ref offset, length, out dataLength))
                 return -1;
-            if (!DataUtility.TryReadArray(buffer, ref offset, length, out data, dataLength))
-                return -1;
-            Data = new NbtFile();
-            Data.LoadFile(new MemoryStream(data), false);
+            if (dataLength != 0)
+            {
+                if (!DataUtility.TryReadArray(buffer, ref offset, length, out data, dataLength))
+                    return -1;
+                Data = new NbtFile();
+                Data.LoadFile(new MemoryStream(data), true);
+            }
             Position = new Vector3(x, y, z);
             return offset;
         }
